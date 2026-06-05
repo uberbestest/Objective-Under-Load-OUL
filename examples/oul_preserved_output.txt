@@ -1,0 +1,23 @@
+Objective:
+Keep support answers source-grounded.
+
+Load / Pressure:
+Normal iteration pressure from weekly prompt cleanup.
+
+Preservation Check:
+The objective remains visible and no proxy substitution is apparent.
+
+Proxy Drift Risks:
+- No likely proxy substitution detected.
+
+Failure Surfaces:
+- No explicit failure surface detected.
+
+Classification:
+PRESERVED
+
+Repair Recommendation:
+No repair required. Keep monitoring proxies as signals, not targets.
+
+Commit Summary:
+OUL: objective preserved for 'Keep support answers source-grounded'.

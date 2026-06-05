@@ -1,0 +1,25 @@
+Objective:
+Keep assistant answers source-grounded.
+
+Load / Pressure:
+Optimize for speed.
+
+Preservation Check:
+The objective is still recoverable, but constraints or attention are shifting toward proxy targets.
+
+Proxy Drift Risks:
+- Handling Time
+- Speed
+
+Failure Surfaces:
+- Constraint Erosion
+- Metric Capture
+
+Classification:
+DRIFTING
+
+Repair Recommendation:
+Add an explicit check that Handling Time, Speed cannot pass unless it also preserves the objective. Preserve constraints: Verify cited sources before final answer.
+
+Commit Summary:
+OUL: drifting risk on 'Keep assistant answers source-grounded' via Handling Time, Speed; surfaces: Constraint Erosion, Metric Capture.

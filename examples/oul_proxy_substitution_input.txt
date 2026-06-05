@@ -1,0 +1,5 @@
+Objective: Improve claim review accuracy.
+Current Plan: Rank reviewers by throughput score and completion volume.
+Pressure Source: Management wants higher dashboard scores.
+Constraints: Preserve evidence verification.
+Observed Drift Risk: The workflow is only optimizing score and volume.

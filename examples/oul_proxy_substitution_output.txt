@@ -1,0 +1,26 @@
+Objective:
+Improve claim review accuracy.
+
+Load / Pressure:
+Management wants higher dashboard scores.
+
+Preservation Check:
+The current plan appears to target a proxy more clearly than the stated objective.
+
+Proxy Drift Risks:
+- Score
+- Throughput
+- Volume
+
+Failure Surfaces:
+- Goodharting
+- Metric Capture
+
+Classification:
+PROXY_SUBSTITUTED
+
+Repair Recommendation:
+Bind the plan back to the original objective and demote Score, Throughput, Volume to monitoring evidence only. Preserve constraints: Preserve evidence verification.
+
+Commit Summary:
+OUL: proxy_substituted risk on 'Improve claim review accuracy' via Score, Throughput; surfaces: Goodharting, Metric Capture.

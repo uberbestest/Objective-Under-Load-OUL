@@ -1,0 +1,5 @@
+Objective: Keep support answers source-grounded.
+Current Plan: Keep support answers source-grounded while preserving citations and escalation rules.
+Pressure Source: Normal iteration pressure from weekly prompt cleanup.
+Constraints: Preserve citations and escalation rules.
+Observed Drift Risk: No observed drift.
