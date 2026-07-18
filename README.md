@@ -5,7 +5,7 @@ when a plan, output, or workflow is exposed to optimization pressure.
 
 It is built as a practical companion to Cass-V, REA, and RPU style review work:
 identify the objective, name the load condition, catch proxy substitution, and
-recommend the smallest repair.
+recommend the smallest repair. It also evaluates execution authority at each action boundary so a valid plan can proceed through its authorized subset without laundering prepared or blocked work into a completion claim.
 
 No API key, model call, backend, telemetry, or build step is required.
 
@@ -45,7 +45,11 @@ Current Plan: Rank reviewers by throughput score and completion volume.
 Pressure Source: Management wants higher dashboard scores.
 Constraints: Preserve evidence verification.
 Observed Drift Risk: The workflow is only optimizing score and volume.
+Action: Local repair | completed=yes
+Action: Platform integration | identity=no | approved=no
 ```
+
+Each `Action` is evaluated independently. Supported boundary fields are `capable`, `identity`, `approved`, `permitted`, `policy`, `platform`, and `completed`, each set to `yes` or `no`. Omitted authority fields default to `yes`; `completed` defaults to `no`. A blocked action is never included in the authorized scope, even when the rest of the plan remains valid.
 
 ## Output
 
@@ -57,8 +61,16 @@ OUL returns deterministic labeled sections:
 4. Proxy Drift Risks
 5. Failure Surfaces
 6. Classification
-7. Repair Recommendation
-8. Commit Summary
+7. Objective Status
+8. Plan Status
+9. Capability Status
+10. Execution Authority
+11. Authorized Scope
+12. Unauthorized Boundary
+13. Stop Condition
+14. Completion Claim
+15. Repair Recommendation
+16. Commit Summary
 
 Classification options:
 
@@ -68,6 +80,12 @@ Classification options:
 - `PROXY_SUBSTITUTED`
 - `COLLAPSED`
 - `INSUFFICIENT_CONTEXT`
+
+Permission-boundary stops remain separate from constraints and objective preservation: `CAPABILITY_BLOCK`, `IDENTITY_BLOCK`, `APPROVAL_BLOCK`, `PERMISSION_BLOCK`, `POLICY_BLOCK`, and `PLATFORM_BOUNDARY` respectively identify inability, unknown identity, missing approval, missing rights, prohibiting rules, and an unavailable platform mechanism.
+
+## Motivating Forensic Case
+
+Thursday's stopped platform integration is recorded in `examples/oul_permission_boundary_input.txt`. The plan remained valid. Local repair and evidence preparation were authorized and completed. Authenticated platform integration lacked identity-backed approval and execution authority, so it stopped at that boundary and must not be claimed complete. The example preserves the difference between technically understood, prepared, awaiting approval, and completed.
 
 ## Examples
 
@@ -79,6 +97,8 @@ Example inputs and outputs live in `examples/`:
 - `examples/oul_proxy_substitution_output.txt`
 - `examples/oul_constraint_drift_input.txt`
 - `examples/oul_constraint_drift_output.txt`
+- `examples/oul_permission_boundary_input.txt`
+- `examples/oul_permission_boundary_output.txt`
 
 ## Tests
 

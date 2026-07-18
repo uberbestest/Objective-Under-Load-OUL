@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .core import analyze_oul, format_report
+from .core import ActionBoundary, analyze_oul, format_report
 
 
 FIELD_ALIASES = {
@@ -32,6 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--constraints", default="", help="Constraints that must remain intact.")
     parser.add_argument("--observed-drift-risk", default="", help="Observed risk or suspected drift.")
     parser.add_argument("--file", type=Path, help="Optional labeled text input file.")
+    parser.add_argument("--action", action="append", default=[], help="Action boundary: name | capable=yes | identity=yes | approved=yes | permitted=yes | policy=yes | platform=yes | completed=no")
     args = parser.parse_args(argv)
 
     fields = {
@@ -40,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         "pressure_source": args.pressure_source,
         "constraints": args.constraints,
         "observed_drift_risk": args.observed_drift_risk,
+        "action_boundaries": [parse_action_boundary(value) for value in args.action],
     }
 
     if args.file:
@@ -52,13 +54,14 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def parse_labeled_text(text: str) -> dict[str, str]:
+def parse_labeled_text(text: str) -> dict[str, object]:
     fields = {
         "objective": "",
         "current_plan": "",
         "pressure_source": "",
         "constraints": "",
         "observed_drift_risk": "",
+        "action_boundaries": [],
     }
     active_key: str | None = None
 
@@ -69,6 +72,10 @@ def parse_labeled_text(text: str) -> dict[str, str]:
 
         label, sep, value = line.partition(":")
         key = FIELD_ALIASES.get(label.strip().lower()) if sep else None
+        if sep and label.strip().lower() == "action":
+            active_key = None
+            fields["action_boundaries"].append(parse_action_boundary(value.strip()))
+            continue
         if key:
             active_key = key
             fields[key] = _append(fields[key], value.strip())
@@ -76,6 +83,22 @@ def parse_labeled_text(text: str) -> dict[str, str]:
             fields[active_key] = _append(fields[active_key], line)
 
     return fields
+
+
+def parse_action_boundary(text: str) -> ActionBoundary:
+    parts = [part.strip() for part in text.split("|") if part.strip()]
+    if not parts: raise ValueError("Action boundary requires an action name.")
+    values = {"capable": True, "identity_established": True, "approved": True,
+              "permitted": True, "policy_allows": True, "platform_exposes": True,
+              "completed": False}
+    aliases = {"identity": "identity_established", "policy": "policy_allows", "platform": "platform_exposes"}
+    for part in parts[1:]:
+        key, sep, raw = part.partition("=")
+        key = aliases.get(key.strip().lower(), key.strip().lower())
+        if not sep or key not in values or raw.strip().lower() not in {"yes", "no"}:
+            raise ValueError(f"Invalid action boundary field: {part}")
+        values[key] = raw.strip().lower() == "yes"
+    return ActionBoundary(action=parts[0], **values)
 
 
 def _append(existing: str, value: str) -> str:

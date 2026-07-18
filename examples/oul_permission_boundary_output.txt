@@ -1,0 +1,48 @@
+Objective:
+Complete the platform integration without overstating execution.
+
+Load / Pressure:
+Pressure to treat technically understood work as effectively done.
+
+Preservation Check:
+The objective remains visible and no proxy substitution is apparent.
+
+Proxy Drift Risks:
+- No likely proxy substitution detected.
+
+Failure Surfaces:
+- No explicit failure surface detected.
+
+Classification:
+PRESERVED
+
+Objective Status:
+Recoverable.
+
+Plan Status:
+Structurally valid.
+
+Capability Status:
+Technically feasible for all stated actions.
+
+Execution Authority:
+Incomplete; only the authorized subset may execute.
+
+Authorized Scope:
+- Local repair
+- Evidence preparation
+
+Unauthorized Boundary:
+- Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK]
+
+Stop Condition:
+Stop before: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK].
+
+Completion Claim:
+Completed: Local repair; Evidence preparation. Not completed and must not be claimed complete: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK].
+
+Repair Recommendation:
+No repair required. Keep monitoring proxies as signals, not targets.
+
+Commit Summary:
+OUL: objective preserved for 'Complete the platform integration without overstating execution'.

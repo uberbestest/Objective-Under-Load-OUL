@@ -16,6 +16,30 @@ Failure Surfaces:
 Classification:
 PRESERVED
 
+Objective Status:
+Recoverable.
+
+Plan Status:
+Structurally valid.
+
+Capability Status:
+Not assessed; no action boundaries supplied.
+
+Execution Authority:
+Not assessed; plan validity does not imply execution authority.
+
+Authorized Scope:
+- No authorized action stated.
+
+Unauthorized Boundary:
+- No unauthorized boundary identified.
+
+Stop Condition:
+Resolve authority per action before execution.
+
+Completion Claim:
+Analysis completed; no action execution was assessed or claimed.
+
 Repair Recommendation:
 No repair required. Keep monitoring proxies as signals, not targets.
 

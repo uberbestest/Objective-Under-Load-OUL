@@ -19,6 +19,30 @@ Failure Surfaces:
 Classification:
 PROXY_SUBSTITUTED
 
+Objective Status:
+Recoverable.
+
+Plan Status:
+Structurally valid only after bounded repair.
+
+Capability Status:
+Not assessed; no action boundaries supplied.
+
+Execution Authority:
+Not assessed; plan validity does not imply execution authority.
+
+Authorized Scope:
+- No authorized action stated.
+
+Unauthorized Boundary:
+- No unauthorized boundary identified.
+
+Stop Condition:
+Resolve authority per action before execution.
+
+Completion Claim:
+Analysis completed; no action execution was assessed or claimed.
+
 Repair Recommendation:
 Bind the plan back to the original objective and demote Score, Throughput, Volume to monitoring evidence only. Preserve constraints: Preserve evidence verification.
 

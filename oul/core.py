@@ -13,6 +13,11 @@ CLASSIFICATIONS = (
     "INSUFFICIENT_CONTEXT",
 )
 
+BLOCK_TYPES = (
+    "CAPABILITY_BLOCK", "IDENTITY_BLOCK", "APPROVAL_BLOCK",
+    "PERMISSION_BLOCK", "POLICY_BLOCK", "PLATFORM_BOUNDARY",
+)
+
 SECTION_ORDER = (
     "Objective:",
     "Load / Pressure:",
@@ -20,6 +25,14 @@ SECTION_ORDER = (
     "Proxy Drift Risks:",
     "Failure Surfaces:",
     "Classification:",
+    "Objective Status:",
+    "Plan Status:",
+    "Capability Status:",
+    "Execution Authority:",
+    "Authorized Scope:",
+    "Unauthorized Boundary:",
+    "Stop Condition:",
+    "Completion Claim:",
     "Repair Recommendation:",
     "Commit Summary:",
 )
@@ -77,6 +90,18 @@ FAILURE_SURFACE_CUES = (
 
 
 @dataclass(frozen=True)
+class ActionBoundary:
+    action: str
+    capable: bool = True
+    identity_established: bool = True
+    approved: bool = True
+    permitted: bool = True
+    policy_allows: bool = True
+    platform_exposes: bool = True
+    completed: bool = False
+
+
+@dataclass(frozen=True)
 class OULResult:
     objective: str
     load_condition: str
@@ -84,6 +109,14 @@ class OULResult:
     proxy_drift_risks: list[str]
     failure_surfaces: list[str]
     classification: str
+    objective_status: str
+    plan_status: str
+    capability_status: str
+    execution_authority: str
+    authorized_scope: list[str]
+    unauthorized_boundary: list[str]
+    stop_condition: str
+    completion_claim: str
     repair_recommendation: str
     commit_summary: str
 
@@ -94,12 +127,14 @@ def analyze_oul(
     pressure_source: str = "",
     constraints: str = "",
     observed_drift_risk: str = "",
+    action_boundaries: list[ActionBoundary] | None = None,
 ) -> OULResult:
     objective = _clean(objective)
     current_plan = _clean(current_plan)
     pressure_source = _clean(pressure_source)
     constraints = _clean(constraints)
     observed_drift_risk = _clean(observed_drift_risk)
+    action_boundaries = action_boundaries or []
 
     combined = " ".join(
         part for part in (current_plan, pressure_source, constraints, observed_drift_risk) if part
@@ -114,6 +149,12 @@ def analyze_oul(
             proxy_drift_risks=["Insufficient context to identify proxy drift risks."],
             failure_surfaces=["Insufficient context"],
             classification="INSUFFICIENT_CONTEXT",
+            objective_status="Not recoverable from supplied context.",
+            plan_status="Not assessable.", capability_status="Not assessable.",
+            execution_authority="Not assessable.", authorized_scope=[],
+            unauthorized_boundary=[],
+            stop_condition="Supply the missing objective and plan context before execution.",
+            completion_claim="No execution completion can be claimed.",
             repair_recommendation="State the objective, current plan or output, pressure source, constraints, and observed drift risk.",
             commit_summary="OUL: context insufficient for objective-under-load classification.",
         )
@@ -142,6 +183,7 @@ def analyze_oul(
     )
     repair = _repair_recommendation(classification, objective, constraints, proxies, failures)
     summary = _commit_summary(classification, objective, proxies, failures)
+    authority = _evaluate_action_boundaries(action_boundaries)
 
     return OULResult(
         objective=objective,
@@ -150,6 +192,11 @@ def analyze_oul(
         proxy_drift_risks=proxies or ["No likely proxy substitution detected."],
         failure_surfaces=failures or ["No explicit failure surface detected."],
         classification=classification,
+        objective_status=_objective_status(classification),
+        plan_status=_plan_status(classification),
+        capability_status=authority[0], execution_authority=authority[1],
+        authorized_scope=authority[2], unauthorized_boundary=authority[3],
+        stop_condition=authority[4], completion_claim=authority[5],
         repair_recommendation=repair,
         commit_summary=summary,
     )
@@ -164,10 +211,65 @@ def format_report(result: OULResult) -> str:
             "Proxy Drift Risks:\n" + _format_list(result.proxy_drift_risks),
             "Failure Surfaces:\n" + _format_list(result.failure_surfaces),
             f"Classification:\n{result.classification}",
+            f"Objective Status:\n{result.objective_status}",
+            f"Plan Status:\n{result.plan_status}",
+            f"Capability Status:\n{result.capability_status}",
+            f"Execution Authority:\n{result.execution_authority}",
+            "Authorized Scope:\n" + _format_list(result.authorized_scope or ["No authorized action stated."]),
+            "Unauthorized Boundary:\n" + _format_list(result.unauthorized_boundary or ["No unauthorized boundary identified."]),
+            f"Stop Condition:\n{result.stop_condition}",
+            f"Completion Claim:\n{result.completion_claim}",
             f"Repair Recommendation:\n{result.repair_recommendation}",
             f"Commit Summary:\n{result.commit_summary}",
         )
     )
+
+
+def _evaluate_action_boundaries(actions: list[ActionBoundary]) -> tuple[str, str, list[str], list[str], str, str]:
+    if not actions:
+        return ("Not assessed; no action boundaries supplied.",
+                "Not assessed; plan validity does not imply execution authority.", [], [],
+                "Resolve authority per action before execution.",
+                "Analysis completed; no action execution was assessed or claimed.")
+    authorized, blocked, completed, pending, block_types = [], [], [], [], []
+    for boundary in actions:
+        blocks = _action_blocks(boundary)
+        if blocks:
+            block_types.extend(blocks)
+            blocked.append(f"{boundary.action} [{', '.join(blocks)}]")
+        else:
+            authorized.append(boundary.action)
+            (completed if boundary.completed else pending).append(boundary.action)
+    capability = "Incomplete." if "CAPABILITY_BLOCK" in block_types else "Technically feasible for all stated actions."
+    execution = "Complete for all stated actions." if not blocked else "Incomplete; only the authorized subset may execute."
+    stop = "No authority stop required." if not blocked else "Stop before: " + "; ".join(blocked) + "."
+    claims = []
+    if completed: claims.append("Completed: " + "; ".join(completed) + ".")
+    if pending: claims.append("Authorized but not claimed complete: " + "; ".join(pending) + ".")
+    if blocked: claims.append("Not completed and must not be claimed complete: " + "; ".join(blocked) + ".")
+    return capability, execution, authorized, blocked, stop, " ".join(claims)
+
+
+def _action_blocks(boundary: ActionBoundary) -> list[str]:
+    checks = ((boundary.capable, "CAPABILITY_BLOCK"),
+              (boundary.identity_established, "IDENTITY_BLOCK"),
+              (boundary.approved, "APPROVAL_BLOCK"),
+              (boundary.permitted, "PERMISSION_BLOCK"),
+              (boundary.policy_allows, "POLICY_BLOCK"),
+              (boundary.platform_exposes, "PLATFORM_BOUNDARY"))
+    return [label for allowed, label in checks if not allowed]
+
+
+def _objective_status(classification: str) -> str:
+    if classification == "COLLAPSED": return "Not recoverable from the current plan."
+    if classification == "INSUFFICIENT_CONTEXT": return "Not recoverable from supplied context."
+    return "Recoverable."
+
+
+def _plan_status(classification: str) -> str:
+    if classification in ("PRESERVED", "STRESSED"): return "Structurally valid."
+    if classification in ("DRIFTING", "PROXY_SUBSTITUTED"): return "Structurally valid only after bounded repair."
+    return "Not structurally valid."
 
 
 def _clean(text: str) -> str:
