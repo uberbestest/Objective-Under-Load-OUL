@@ -9,6 +9,20 @@ recommend the smallest repair. It also evaluates execution authority at each act
 
 No API key, model call, backend, telemetry, or build step is required.
 
+
+## Version
+
+Current repository version: **0.2.0** (2026-07-18).
+
+The package version in `pyproject.toml` is the source of truth. This history names
+user-visible changes so readers do not have to infer versions by comparing commits.
+
+- **0.2.0** — Added per-action Permission Boundary evaluation, authorized-subset
+  execution reporting, explicit completion claims, and distinct capability,
+  identity, approval, permission, policy, and platform stop classifications.
+- **0.1.0** — Initial deterministic OUL CLI for objective-preservation,
+  proxy-drift, failure-surface, and bounded-repair analysis.
+
 ## Install
 
 Use directly from the repo:
