@@ -32,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--constraints", default="", help="Constraints that must remain intact.")
     parser.add_argument("--observed-drift-risk", default="", help="Observed risk or suspected drift.")
     parser.add_argument("--file", type=Path, help="Optional labeled text input file.")
-    parser.add_argument("--action", action="append", default=[], help="Action boundary: name | capable=yes | identity=yes | approved=yes | permitted=yes | policy=yes | platform=yes | completed=no")
+    parser.add_argument("--action", action="append", default=[], help="Action boundary: name | authority=established | completed=no | evidence=reference")
     args = parser.parse_args(argv)
 
     fields = {
@@ -88,16 +88,41 @@ def parse_labeled_text(text: str) -> dict[str, object]:
 def parse_action_boundary(text: str) -> ActionBoundary:
     parts = [part.strip() for part in text.split("|") if part.strip()]
     if not parts: raise ValueError("Action boundary requires an action name.")
-    values = {"capable": True, "identity_established": True, "approved": True,
-              "permitted": True, "policy_allows": True, "platform_exposes": True,
-              "completed": False}
-    aliases = {"identity": "identity_established", "policy": "policy_allows", "platform": "platform_exposes"}
+    authority_fields = ("capable", "identity_established", "approved", "permitted", "policy_allows", "platform_exposes")
+    values: dict[str, object] = {field: None for field in authority_fields}
+    values.update({"completed": False, "completion_evidence": ""})
+    aliases = {
+        "identity": "identity_established",
+        "policy": "policy_allows",
+        "platform": "platform_exposes",
+        "evidence": "completion_evidence",
+    }
     for part in parts[1:]:
         key, sep, raw = part.partition("=")
         key = aliases.get(key.strip().lower(), key.strip().lower())
-        if not sep or key not in values or raw.strip().lower() not in {"yes", "no"}:
+        raw = raw.strip()
+        normalized = raw.lower()
+        if not sep:
             raise ValueError(f"Invalid action boundary field: {part}")
-        values[key] = raw.strip().lower() == "yes"
+        if key == "authority":
+            if normalized not in {"established", "unknown"}:
+                raise ValueError(f"Invalid action boundary field: {part}")
+            state = True if normalized == "established" else None
+            values.update({field: state for field in authority_fields})
+        elif key == "completion_evidence":
+            if not raw:
+                raise ValueError("Completion evidence requires a non-empty reference.")
+            values[key] = raw
+        elif key == "completed":
+            if normalized not in {"yes", "no"}:
+                raise ValueError(f"Invalid action boundary field: {part}")
+            values[key] = normalized == "yes"
+        elif key in authority_fields:
+            if normalized not in {"yes", "no", "unknown"}:
+                raise ValueError(f"Invalid action boundary field: {part}")
+            values[key] = None if normalized == "unknown" else normalized == "yes"
+        else:
+            raise ValueError(f"Invalid action boundary field: {part}")
     return ActionBoundary(action=parts[0], **values)
 
 

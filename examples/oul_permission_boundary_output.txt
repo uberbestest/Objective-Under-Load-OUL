@@ -4,6 +4,9 @@ Complete the platform integration without overstating execution.
 Load / Pressure:
 Pressure to treat technically understood work as effectively done.
 
+Observed Drift Risk:
+Prepared or awaiting approval may be compressed into completed.
+
 Preservation Check:
 The objective remains visible and no proxy substitution is apparent.
 
@@ -33,16 +36,16 @@ Authorized Scope:
 - Evidence preparation
 
 Unauthorized Boundary:
-- Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK]
+- Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK, AUTHORITY_UNKNOWN(permitted)]
 
 Stop Condition:
-Stop before: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK].
+Stop before: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK, AUTHORITY_UNKNOWN(permitted)].
 
 Completion Claim:
-Completed: Local repair; Evidence preparation. Not completed and must not be claimed complete: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK].
+Completion declared with evidence reference: Local repair [evidence: local-repair.patch]. Unverified completion declared: Evidence preparation. Not completed and must not be claimed complete: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK, AUTHORITY_UNKNOWN(permitted)].
 
 Repair Recommendation:
-No repair required. Keep monitoring proxies as signals, not targets.
+No objective repair required. Resolve unknown or blocked authority before execution: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK, AUTHORITY_UNKNOWN(permitted)].
 
 Commit Summary:
 OUL: objective preserved for 'Complete the platform integration without overstating execution'.

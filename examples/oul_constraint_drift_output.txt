@@ -4,6 +4,9 @@ Keep assistant answers source-grounded.
 Load / Pressure:
 Optimize for speed.
 
+Observed Drift Risk:
+Verification may be bypassed to improve speed.
+
 Preservation Check:
 The objective is still recoverable, but constraints or attention are shifting toward proxy targets.
 
