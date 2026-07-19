@@ -4,6 +4,9 @@ Improve claim review accuracy.
 Load / Pressure:
 Management wants higher dashboard scores.
 
+Observed Drift Risk:
+The workflow is only optimizing score and volume.
+
 Preservation Check:
 The current plan appears to target a proxy more clearly than the stated objective.
 

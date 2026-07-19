@@ -21,6 +21,7 @@ BLOCK_TYPES = (
 SECTION_ORDER = (
     "Objective:",
     "Load / Pressure:",
+    "Observed Drift Risk:",
     "Preservation Check:",
     "Proxy Drift Risks:",
     "Failure Surfaces:",
@@ -92,19 +93,25 @@ FAILURE_SURFACE_CUES = (
 @dataclass(frozen=True)
 class ActionBoundary:
     action: str
-    capable: bool = True
-    identity_established: bool = True
-    approved: bool = True
-    permitted: bool = True
-    policy_allows: bool = True
-    platform_exposes: bool = True
+    capable: bool | None = None
+    identity_established: bool | None = None
+    approved: bool | None = None
+    permitted: bool | None = None
+    policy_allows: bool | None = None
+    platform_exposes: bool | None = None
     completed: bool = False
+    completion_evidence: str = ""
+
+    def __post_init__(self) -> None:
+        if self.completion_evidence and not self.completed:
+            raise ValueError("Completion evidence requires completed=yes.")
 
 
 @dataclass(frozen=True)
 class OULResult:
     objective: str
     load_condition: str
+    observed_drift_risk: str
     preservation_check: str
     proxy_drift_risks: list[str]
     failure_surfaces: list[str]
@@ -145,6 +152,7 @@ def analyze_oul(
         return OULResult(
             objective=objective or "Objective not stated.",
             load_condition=pressure_source or "Load condition not stated.",
+            observed_drift_risk=observed_drift_risk or "No observed drift risk stated.",
             preservation_check="Cannot determine whether the objective survives because required context is missing.",
             proxy_drift_risks=["Insufficient context to identify proxy drift risks."],
             failure_surfaces=["Insufficient context"],
@@ -184,10 +192,12 @@ def analyze_oul(
     repair = _repair_recommendation(classification, objective, constraints, proxies, failures)
     summary = _commit_summary(classification, objective, proxies, failures)
     authority = _evaluate_action_boundaries(action_boundaries)
+    repair = _authority_repair(repair, authority[3])
 
     return OULResult(
         objective=objective,
         load_condition=pressure_source or "No explicit pressure source stated.",
+        observed_drift_risk=observed_drift_risk or "No observed drift risk stated.",
         preservation_check=preservation_check,
         proxy_drift_risks=proxies or ["No likely proxy substitution detected."],
         failure_surfaces=failures or ["No explicit failure surface detected."],
@@ -207,6 +217,7 @@ def format_report(result: OULResult) -> str:
         (
             f"Objective:\n{result.objective}",
             f"Load / Pressure:\n{result.load_condition}",
+            f"Observed Drift Risk:\n{result.observed_drift_risk}",
             f"Preservation Check:\n{result.preservation_check}",
             "Proxy Drift Risks:\n" + _format_list(result.proxy_drift_risks),
             "Failure Surfaces:\n" + _format_list(result.failure_surfaces),
@@ -231,33 +242,59 @@ def _evaluate_action_boundaries(actions: list[ActionBoundary]) -> tuple[str, str
                 "Not assessed; plan validity does not imply execution authority.", [], [],
                 "Resolve authority per action before execution.",
                 "Analysis completed; no action execution was assessed or claimed.")
-    authorized, blocked, completed, pending, block_types = [], [], [], [], []
+    authorized, blocked, evidenced, declared, pending = [], [], [], [], []
+    blocked_evidenced, blocked_declared, blocked_pending = [], [], []
     for boundary in actions:
-        blocks = _action_blocks(boundary)
-        if blocks:
-            block_types.extend(blocks)
-            blocked.append(f"{boundary.action} [{', '.join(blocks)}]")
+        stops = _action_stops(boundary)
+        if stops:
+            blocked_label = f"{boundary.action} [{', '.join(stops)}]"
+            blocked.append(blocked_label)
+            if not boundary.completed:
+                blocked_pending.append(blocked_label)
+            elif boundary.completion_evidence:
+                blocked_evidenced.append(f"{blocked_label} [evidence: {boundary.completion_evidence}]")
+            else:
+                blocked_declared.append(blocked_label)
         else:
             authorized.append(boundary.action)
-            (completed if boundary.completed else pending).append(boundary.action)
-    capability = "Incomplete." if "CAPABILITY_BLOCK" in block_types else "Technically feasible for all stated actions."
-    execution = "Complete for all stated actions." if not blocked else "Incomplete; only the authorized subset may execute."
+            if not boundary.completed:
+                pending.append(boundary.action)
+            elif boundary.completion_evidence:
+                evidenced.append(f"{boundary.action} [evidence: {boundary.completion_evidence}]")
+            else:
+                declared.append(boundary.action)
+    if any(boundary.capable is False for boundary in actions):
+        capability = "Incomplete."
+    elif any(boundary.capable is None for boundary in actions):
+        capability = "Unknown for one or more stated actions."
+    else:
+        capability = "Technically feasible for all stated actions."
+    execution = "Authority established for all stated actions." if not blocked else "Incomplete; only the authorized subset may execute."
     stop = "No authority stop required." if not blocked else "Stop before: " + "; ".join(blocked) + "."
     claims = []
-    if completed: claims.append("Completed: " + "; ".join(completed) + ".")
+    if evidenced: claims.append("Completion declared with evidence reference: " + "; ".join(evidenced) + ".")
+    if declared: claims.append("Unverified completion declared: " + "; ".join(declared) + ".")
     if pending: claims.append("Authorized but not claimed complete: " + "; ".join(pending) + ".")
-    if blocked: claims.append("Not completed and must not be claimed complete: " + "; ".join(blocked) + ".")
+    if blocked_evidenced: claims.append("Unauthorized completion declared with evidence reference: " + "; ".join(blocked_evidenced) + ". Do not represent it as authorized completion.")
+    if blocked_declared: claims.append("Unauthorized unverified completion declared: " + "; ".join(blocked_declared) + ". Do not represent it as authorized completion.")
+    if blocked_pending: claims.append("Not completed and must not be claimed complete: " + "; ".join(blocked_pending) + ".")
     return capability, execution, authorized, blocked, stop, " ".join(claims)
 
 
-def _action_blocks(boundary: ActionBoundary) -> list[str]:
-    checks = ((boundary.capable, "CAPABILITY_BLOCK"),
-              (boundary.identity_established, "IDENTITY_BLOCK"),
-              (boundary.approved, "APPROVAL_BLOCK"),
-              (boundary.permitted, "PERMISSION_BLOCK"),
-              (boundary.policy_allows, "POLICY_BLOCK"),
-              (boundary.platform_exposes, "PLATFORM_BOUNDARY"))
-    return [label for allowed, label in checks if not allowed]
+def _action_stops(boundary: ActionBoundary) -> list[str]:
+    checks = (
+        ("capable", boundary.capable, "CAPABILITY_BLOCK"),
+        ("identity", boundary.identity_established, "IDENTITY_BLOCK"),
+        ("approved", boundary.approved, "APPROVAL_BLOCK"),
+        ("permitted", boundary.permitted, "PERMISSION_BLOCK"),
+        ("policy", boundary.policy_allows, "POLICY_BLOCK"),
+        ("platform", boundary.platform_exposes, "PLATFORM_BOUNDARY"),
+    )
+    blocks = [label for _, allowed, label in checks if allowed is False]
+    unknown = [field for field, allowed, _ in checks if allowed is None]
+    if unknown:
+        blocks.append(f"AUTHORITY_UNKNOWN({', '.join(unknown)})")
+    return blocks
 
 
 def _objective_status(classification: str) -> str:
@@ -270,6 +307,15 @@ def _plan_status(classification: str) -> str:
     if classification in ("PRESERVED", "STRESSED"): return "Structurally valid."
     if classification in ("DRIFTING", "PROXY_SUBSTITUTED"): return "Structurally valid only after bounded repair."
     return "Not structurally valid."
+
+
+def _authority_repair(repair: str, unauthorized_boundary: list[str]) -> str:
+    if not unauthorized_boundary:
+        return repair
+    authority_repair = "Resolve unknown or blocked authority before execution: " + "; ".join(unauthorized_boundary) + "."
+    if repair == "No repair required. Keep monitoring proxies as signals, not targets.":
+        return "No objective repair required. " + authority_repair
+    return repair + " " + authority_repair
 
 
 def _clean(text: str) -> str:

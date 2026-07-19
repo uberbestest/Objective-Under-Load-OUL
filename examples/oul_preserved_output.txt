@@ -4,6 +4,9 @@ Keep support answers source-grounded.
 Load / Pressure:
 Normal iteration pressure from weekly prompt cleanup.
 
+Observed Drift Risk:
+No observed drift.
+
 Preservation Check:
 The objective remains visible and no proxy substitution is apparent.
 

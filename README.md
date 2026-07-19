@@ -12,11 +12,16 @@ No API key, model call, backend, telemetry, or build step is required.
 
 ## Version
 
-Current repository version: **0.2.0** (2026-07-18).
+Current repository version: **0.3.0** (2026-07-18).
 
 The package version in `pyproject.toml` is the source of truth. This history names
 user-visible changes so readers do not have to infer versions by comparing commits.
 
+- **0.3.0** — Changed omitted authority fields from permissive `yes` defaults to
+  explicit `unknown`, added the `authority=established` shorthand, preserved the
+  supplied drift risk in reports, distinguished unverified from evidence-referenced
+  completion declarations, surfaced unauthorized completion without erasing it,
+  and removed completion language from authority status.
 - **0.2.0** — Added per-action Permission Boundary evaluation, authorized-subset
   execution reporting, explicit completion claims, and distinct capability,
   identity, approval, permission, policy, and platform stop classifications.
@@ -59,11 +64,24 @@ Current Plan: Rank reviewers by throughput score and completion volume.
 Pressure Source: Management wants higher dashboard scores.
 Constraints: Preserve evidence verification.
 Observed Drift Risk: The workflow is only optimizing score and volume.
-Action: Local repair | completed=yes
-Action: Platform integration | identity=no | approved=no
+Action: Local repair | authority=established | completed=yes | evidence=local-repair.patch
+Action: Platform integration | capable=yes | identity=no | approved=no | permitted=unknown | policy=yes | platform=yes
 ```
 
-Each `Action` is evaluated independently. Supported boundary fields are `capable`, `identity`, `approved`, `permitted`, `policy`, `platform`, and `completed`, each set to `yes` or `no`. Omitted authority fields default to `yes`; `completed` defaults to `no`. A blocked action is never included in the authorized scope, even when the rest of the plan remains valid.
+Each `Action` is evaluated independently. Authority fields are `capable`,
+`identity`, `approved`, `permitted`, `policy`, and `platform`; they accept `yes`,
+`no`, or `unknown`. Omitted authority fields remain `unknown` and stop the action
+from entering authorized scope. Use
+`authority=established` to explicitly set all six authority fields to `yes`, then
+override any field that differs. `completed` accepts `yes` or `no` and defaults
+to `no`. An optional `evidence=reference` may accompany `completed=yes`; OUL
+reports a completion without evidence as an unverified declaration. An evidence
+reference is preserved but not independently validated. A blocked action is never included in the authorized scope,
+even when the rest of the plan remains valid.
+
+If a blocked action is supplied with `completed=yes`, OUL preserves that report
+as an unauthorized completion declaration. It does not erase possible execution,
+and it does not convert the execution into authorized completion.
 
 ## Output
 
@@ -71,20 +89,21 @@ OUL returns deterministic labeled sections:
 
 1. Objective
 2. Load / Pressure
-3. Preservation Check
-4. Proxy Drift Risks
-5. Failure Surfaces
-6. Classification
-7. Objective Status
-8. Plan Status
-9. Capability Status
-10. Execution Authority
-11. Authorized Scope
-12. Unauthorized Boundary
-13. Stop Condition
-14. Completion Claim
-15. Repair Recommendation
-16. Commit Summary
+3. Observed Drift Risk
+4. Preservation Check
+5. Proxy Drift Risks
+6. Failure Surfaces
+7. Classification
+8. Objective Status
+9. Plan Status
+10. Capability Status
+11. Execution Authority
+12. Authorized Scope
+13. Unauthorized Boundary
+14. Stop Condition
+15. Completion Claim
+16. Repair Recommendation
+17. Commit Summary
 
 Classification options:
 
@@ -97,9 +116,14 @@ Classification options:
 
 Permission-boundary stops remain separate from constraints and objective preservation: `CAPABILITY_BLOCK`, `IDENTITY_BLOCK`, `APPROVAL_BLOCK`, `PERMISSION_BLOCK`, `POLICY_BLOCK`, and `PLATFORM_BOUNDARY` respectively identify inability, unknown identity, missing approval, missing rights, prohibiting rules, and an unavailable platform mechanism.
 
+`AUTHORITY_UNKNOWN(...)` is an evidence state rather than a seventh denial
+classification. It records which authority fields were not established and
+keeps the action outside authorized scope without pretending that authority was
+explicitly denied.
+
 ## Motivating Forensic Case
 
-Thursday's stopped platform integration is recorded in `examples/oul_permission_boundary_input.txt`. The plan remained valid. Local repair and evidence preparation were authorized and completed. Authenticated platform integration lacked identity-backed approval and execution authority, so it stopped at that boundary and must not be claimed complete. The example preserves the difference between technically understood, prepared, awaiting approval, and completed.
+Thursday's stopped platform integration is recorded in `examples/oul_permission_boundary_input.txt`. The plan remained valid. Local repair and evidence preparation were authorized and declared complete, but only local repair carries a completion-evidence reference in the example. Authenticated platform integration lacked identity-backed approval, had unknown permission state, and stopped at that boundary. It must not be claimed complete. The example preserves the difference between technically understood, prepared, awaiting approval, declared complete, and evidence-referenced completion.
 
 ## Examples
 
