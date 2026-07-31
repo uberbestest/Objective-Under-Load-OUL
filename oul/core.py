@@ -22,6 +22,7 @@ SECTION_ORDER = (
     "Objective:",
     "Load / Pressure:",
     "Observed Drift Risk:",
+    "Evidence / Inference Boundary:",
     "Preservation Check:",
     "Proxy Drift Risks:",
     "Failure Surfaces:",
@@ -35,6 +36,9 @@ SECTION_ORDER = (
     "Stop Condition:",
     "Completion Claim:",
     "Repair Recommendation:",
+    "Residual Exploit Surfaces:",
+    "Falsification Conditions:",
+    "Delta Check:",
     "Commit Summary:",
 )
 
@@ -112,6 +116,7 @@ class OULResult:
     objective: str
     load_condition: str
     observed_drift_risk: str
+    evidence_inference_boundary: list[str]
     preservation_check: str
     proxy_drift_risks: list[str]
     failure_surfaces: list[str]
@@ -125,6 +130,9 @@ class OULResult:
     stop_condition: str
     completion_claim: str
     repair_recommendation: str
+    residual_exploit_surfaces: list[str]
+    falsification_conditions: list[str]
+    delta_check: str
     commit_summary: str
 
 
@@ -134,6 +142,13 @@ def analyze_oul(
     pressure_source: str = "",
     constraints: str = "",
     observed_drift_risk: str = "",
+    evidence: str = "",
+    inferences: str = "",
+    assumptions: str = "",
+    unknowns: str = "",
+    prior_objective: str = "",
+    prior_plan: str = "",
+    prior_constraints: str = "",
     action_boundaries: list[ActionBoundary] | None = None,
 ) -> OULResult:
     objective = _clean(objective)
@@ -141,6 +156,13 @@ def analyze_oul(
     pressure_source = _clean(pressure_source)
     constraints = _clean(constraints)
     observed_drift_risk = _clean(observed_drift_risk)
+    evidence = _clean(evidence)
+    inferences = _clean(inferences)
+    assumptions = _clean(assumptions)
+    unknowns = _clean(unknowns)
+    prior_objective = _clean(prior_objective)
+    prior_plan = _clean(prior_plan)
+    prior_constraints = _clean(prior_constraints)
     action_boundaries = action_boundaries or []
 
     combined = " ".join(
@@ -149,14 +171,25 @@ def analyze_oul(
     lower_combined = combined.lower()
 
     if not objective or not combined:
+        classification = "INSUFFICIENT_CONTEXT"
         return OULResult(
             objective=objective or "Objective not stated.",
             load_condition=pressure_source or "Load condition not stated.",
             observed_drift_risk=observed_drift_risk or "No observed drift risk stated.",
+            evidence_inference_boundary=_evidence_inference_boundary(
+                evidence=evidence,
+                inferences=inferences,
+                assumptions=assumptions,
+                unknowns=unknowns,
+                supplied_fields=_supplied_field_names(
+                    objective, current_plan, pressure_source, constraints, observed_drift_risk
+                ),
+                classification=classification,
+            ),
             preservation_check="Cannot determine whether the objective survives because required context is missing.",
             proxy_drift_risks=["Insufficient context to identify proxy drift risks."],
             failure_surfaces=["Insufficient context"],
-            classification="INSUFFICIENT_CONTEXT",
+            classification=classification,
             objective_status="Not recoverable from supplied context.",
             plan_status="Not assessable.", capability_status="Not assessable.",
             execution_authority="Not assessable.", authorized_scope=[],
@@ -164,6 +197,16 @@ def analyze_oul(
             stop_condition="Supply the missing objective and plan context before execution.",
             completion_claim="No execution completion can be claimed.",
             repair_recommendation="State the objective, current plan or output, pressure source, constraints, and observed drift risk.",
+            residual_exploit_surfaces=["Cannot assess residual exploit surfaces without complete context."],
+            falsification_conditions=["No falsification condition can be derived until the missing objective and plan context is supplied."],
+            delta_check=_delta_check(
+                objective=objective,
+                current_plan=current_plan,
+                constraints=constraints,
+                prior_objective=prior_objective,
+                prior_plan=prior_plan,
+                prior_constraints=prior_constraints,
+            ),
             commit_summary="OUL: context insufficient for objective-under-load classification.",
         )
 
@@ -198,6 +241,16 @@ def analyze_oul(
         objective=objective,
         load_condition=pressure_source or "No explicit pressure source stated.",
         observed_drift_risk=observed_drift_risk or "No observed drift risk stated.",
+        evidence_inference_boundary=_evidence_inference_boundary(
+            evidence=evidence,
+            inferences=inferences,
+            assumptions=assumptions,
+            unknowns=unknowns,
+            supplied_fields=_supplied_field_names(
+                objective, current_plan, pressure_source, constraints, observed_drift_risk
+            ),
+            classification=classification,
+        ),
         preservation_check=preservation_check,
         proxy_drift_risks=proxies or ["No likely proxy substitution detected."],
         failure_surfaces=failures or ["No explicit failure surface detected."],
@@ -208,6 +261,16 @@ def analyze_oul(
         authorized_scope=authority[2], unauthorized_boundary=authority[3],
         stop_condition=authority[4], completion_claim=authority[5],
         repair_recommendation=repair,
+        residual_exploit_surfaces=_residual_exploit_surfaces(classification, proxies, failures),
+        falsification_conditions=_falsification_conditions(classification, proxies),
+        delta_check=_delta_check(
+            objective=objective,
+            current_plan=current_plan,
+            constraints=constraints,
+            prior_objective=prior_objective,
+            prior_plan=prior_plan,
+            prior_constraints=prior_constraints,
+        ),
         commit_summary=summary,
     )
 
@@ -218,6 +281,7 @@ def format_report(result: OULResult) -> str:
             f"Objective:\n{result.objective}",
             f"Load / Pressure:\n{result.load_condition}",
             f"Observed Drift Risk:\n{result.observed_drift_risk}",
+            "Evidence / Inference Boundary:\n" + _format_list(result.evidence_inference_boundary),
             f"Preservation Check:\n{result.preservation_check}",
             "Proxy Drift Risks:\n" + _format_list(result.proxy_drift_risks),
             "Failure Surfaces:\n" + _format_list(result.failure_surfaces),
@@ -231,9 +295,133 @@ def format_report(result: OULResult) -> str:
             f"Stop Condition:\n{result.stop_condition}",
             f"Completion Claim:\n{result.completion_claim}",
             f"Repair Recommendation:\n{result.repair_recommendation}",
+            "Residual Exploit Surfaces:\n" + _format_list(result.residual_exploit_surfaces),
+            "Falsification Conditions:\n" + _format_list(result.falsification_conditions),
+            f"Delta Check:\n{result.delta_check}",
             f"Commit Summary:\n{result.commit_summary}",
         )
     )
+
+
+def _supplied_field_names(*values: str) -> list[str]:
+    names = ("objective", "current plan/output", "pressure source", "constraints", "observed drift risk")
+    return [name for name, value in zip(names, values) if value]
+
+
+def _evidence_inference_boundary(
+    *,
+    evidence: str,
+    inferences: str,
+    assumptions: str,
+    unknowns: str,
+    supplied_fields: list[str],
+    classification: str,
+) -> list[str]:
+    supplied = ", ".join(supplied_fields) or "no substantive audit fields"
+    evidence_state = (
+        f"User-designated evidence: {evidence} Input fields ({supplied}) are treated as supplied statements, not independently verified."
+        if evidence
+        else f"Supplied statements: {supplied}; none were independently verified."
+    )
+    inference_state = (
+        f"User-designated inference: {inferences} OUL heuristic inference: {classification}, derived from deterministic keyword and term-overlap cues."
+        if inferences
+        else f"OUL heuristic inference: {classification}, derived from deterministic keyword and term-overlap cues."
+    )
+    assumption_state = f"User-designated assumption: {assumptions}" if assumptions else "No user-designated assumption supplied."
+    unknown_state = f"User-designated unknown: {unknowns}" if unknowns else "No explicit unknown supplied; this does not establish that none exist."
+    return [evidence_state, inference_state, assumption_state, unknown_state]
+
+
+def _residual_exploit_surfaces(
+    classification: str,
+    proxies: list[str],
+    failures: list[str],
+) -> list[str]:
+    if classification == "INSUFFICIENT_CONTEXT":
+        return ["Cannot assess residual exploit surfaces without complete context."]
+    surfaces = []
+    if proxies:
+        surfaces.append(
+            f"Proxy pressure remains exploitable if {', '.join(proxies)} can improve while the objective or active constraints fail."
+        )
+    if failures:
+        surfaces.append(
+            f"The proposed repair remains unverified against these detected surfaces: {', '.join(failures)}."
+        )
+    return surfaces or ["No residual exploit surface identified from supplied text; absence was not independently proven."]
+
+
+def _falsification_conditions(classification: str, proxies: list[str]) -> list[str]:
+    if classification == "INSUFFICIENT_CONTEXT":
+        return ["No falsification condition can be derived until the missing objective and plan context is supplied."]
+    conditions = [
+        "The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails."
+    ]
+    if proxies:
+        conditions.append(
+            f"It also fails if {', '.join(proxies)} improve without corresponding objective preservation."
+        )
+    return conditions
+
+
+def _delta_check(
+    *,
+    objective: str,
+    current_plan: str,
+    constraints: str,
+    prior_objective: str,
+    prior_plan: str,
+    prior_constraints: str,
+) -> str:
+    prior_values = (prior_objective, prior_plan, prior_constraints)
+    if not any(prior_values):
+        return "No prior comparable state available."
+    if not all(prior_values):
+        return "Prior state is incomplete and not comparable; supply Prior Objective, Prior Plan, and Prior Constraints."
+
+    current_text = " ".join(part for part in (current_plan, constraints) if part)
+    prior_text = " ".join((prior_plan, prior_constraints))
+    current_proxies = set(_detect_proxy_risks(current_text))
+    prior_proxies = set(_detect_proxy_risks(prior_text))
+    current_failures = set(_detect_failure_surfaces(current_text.lower(), list(current_proxies), constraints))
+    prior_failures = set(_detect_failure_surfaces(prior_text.lower(), list(prior_proxies), prior_constraints))
+
+    objective_change = (
+        "Objective text unchanged."
+        if objective.lower() == prior_objective.lower()
+        else "Objective text changed; authority for that change is not inferred."
+    )
+    prior_visible = _objective_visible(prior_objective, prior_plan)
+    current_visible = _objective_visible(objective, current_plan)
+    if prior_visible and not current_visible:
+        fidelity = "Objective visibility weakened."
+    elif not prior_visible and current_visible:
+        fidelity = "Objective visibility strengthened."
+    else:
+        fidelity = "Objective visibility unchanged."
+
+    constraint_change = (
+        "Constraint text unchanged."
+        if constraints.lower() == prior_constraints.lower()
+        else "Constraint text changed; added, removed, strengthened, weakened, or displaced status is unresolved from text alone."
+    )
+    proxy_change = _set_delta("Proxy dependence", prior_proxies, current_proxies)
+    surface_change = _set_delta("Exploit surfaces", prior_failures, current_failures)
+    return " ".join((objective_change, fidelity, constraint_change, proxy_change, surface_change))
+
+
+def _set_delta(label: str, prior: set[str], current: set[str]) -> str:
+    added = sorted(current - prior)
+    removed = sorted(prior - current)
+    if not added and not removed:
+        return f"{label} unchanged."
+    parts = []
+    if added:
+        parts.append("added: " + ", ".join(added))
+    if removed:
+        parts.append("removed: " + ", ".join(removed))
+    return f"{label} " + "; ".join(parts) + "."
 
 
 def _evaluate_action_boundaries(actions: list[ActionBoundary]) -> tuple[str, str, list[str], list[str], str, str]:

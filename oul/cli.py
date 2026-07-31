@@ -21,6 +21,16 @@ FIELD_ALIASES = {
     "observed drift risk": "observed_drift_risk",
     "drift risk": "observed_drift_risk",
     "drift": "observed_drift_risk",
+    "evidence": "evidence",
+    "inference": "inferences",
+    "inferences": "inferences",
+    "assumption": "assumptions",
+    "assumptions": "assumptions",
+    "unknown": "unknowns",
+    "unknowns": "unknowns",
+    "prior objective": "prior_objective",
+    "prior plan": "prior_plan",
+    "prior constraints": "prior_constraints",
 }
 
 
@@ -31,6 +41,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pressure-source", default="", help="Optimization pressure or load condition.")
     parser.add_argument("--constraints", default="", help="Constraints that must remain intact.")
     parser.add_argument("--observed-drift-risk", default="", help="Observed risk or suspected drift.")
+    parser.add_argument("--evidence", default="", help="User-designated supplied or observed evidence.")
+    parser.add_argument("--inference", dest="inferences", default="", help="User-designated inference to keep distinct from evidence.")
+    parser.add_argument("--assumptions", default="", help="Assumptions required for the review.")
+    parser.add_argument("--unknowns", default="", help="Material missing or unresolved information.")
+    parser.add_argument("--prior-objective", default="", help="Objective from an explicitly comparable prior state.")
+    parser.add_argument("--prior-plan", default="", help="Plan from an explicitly comparable prior state.")
+    parser.add_argument("--prior-constraints", default="", help="Constraints from an explicitly comparable prior state.")
     parser.add_argument("--file", type=Path, help="Optional labeled text input file.")
     parser.add_argument("--action", action="append", default=[], help="Action boundary: name | authority=established | completed=no | evidence=reference")
     args = parser.parse_args(argv)
@@ -41,6 +58,13 @@ def main(argv: list[str] | None = None) -> int:
         "pressure_source": args.pressure_source,
         "constraints": args.constraints,
         "observed_drift_risk": args.observed_drift_risk,
+        "evidence": args.evidence,
+        "inferences": args.inferences,
+        "assumptions": args.assumptions,
+        "unknowns": args.unknowns,
+        "prior_objective": args.prior_objective,
+        "prior_plan": args.prior_plan,
+        "prior_constraints": args.prior_constraints,
         "action_boundaries": [parse_action_boundary(value) for value in args.action],
     }
 
@@ -61,6 +85,13 @@ def parse_labeled_text(text: str) -> dict[str, object]:
         "pressure_source": "",
         "constraints": "",
         "observed_drift_risk": "",
+        "evidence": "",
+        "inferences": "",
+        "assumptions": "",
+        "unknowns": "",
+        "prior_objective": "",
+        "prior_plan": "",
+        "prior_constraints": "",
         "action_boundaries": [],
     }
     active_key: str | None = None

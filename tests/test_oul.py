@@ -137,6 +137,62 @@ class OULTests(unittest.TestCase):
         output = format_report(result)
         self.assertIn("Observed Drift Risk:\nA local pass may be compressed into remote verification.", output)
 
+    def test_evidence_inference_assumption_and_unknown_are_not_laundered(self) -> None:
+        result = analyze_oul(
+            objective="Preserve source-grounded review.",
+            current_plan="Preserve source-grounded review under score pressure.",
+            pressure_source="Increase score.",
+            evidence="The plan explicitly uses a score.",
+            inferences="The score may displace review quality.",
+            assumptions="The supplied plan is applied as written.",
+            unknowns="No enforcement behavior was supplied.",
+        )
+        boundary = " ".join(result.evidence_inference_boundary)
+        self.assertIn("User-designated evidence", boundary)
+        self.assertIn("not independently verified", boundary)
+        self.assertIn("User-designated inference", boundary)
+        self.assertIn("User-designated assumption", boundary)
+        self.assertIn("User-designated unknown", boundary)
+
+    def test_residual_surfaces_and_falsification_conditions_are_explicit(self) -> None:
+        result = analyze_oul(
+            objective="Improve claim review accuracy.",
+            current_plan="Rank reviewers by throughput score.",
+            pressure_source="Increase dashboard score.",
+            constraints="Preserve evidence verification.",
+        )
+        self.assertIn("Score", " ".join(result.residual_exploit_surfaces))
+        self.assertIn("active constraint fails", " ".join(result.falsification_conditions))
+        self.assertIn("without corresponding objective preservation", " ".join(result.falsification_conditions))
+
+    def test_delta_requires_a_complete_comparable_prior_state(self) -> None:
+        none = analyze_oul(
+            objective="Preserve verification.",
+            current_plan="Preserve verification during review.",
+            pressure_source="Deadline pressure.",
+        )
+        self.assertEqual(none.delta_check, "No prior comparable state available.")
+
+        incomplete = analyze_oul(
+            objective="Preserve verification.",
+            current_plan="Preserve verification during review.",
+            pressure_source="Deadline pressure.",
+            prior_plan="Verify every source.",
+        )
+        self.assertIn("incomplete and not comparable", incomplete.delta_check)
+
+    def test_comparable_delta_reports_fidelity_proxy_and_surface_changes(self) -> None:
+        fields = parse_labeled_text((EXAMPLES_DIR / "oul_repair_stability_input.txt").read_text(encoding="utf-8"))
+        result = analyze_oul(**fields)
+        self.assertIn("Objective visibility weakened.", result.delta_check)
+        self.assertIn("Proxy dependence added:", result.delta_check)
+        self.assertIn("Exploit surfaces added:", result.delta_check)
+
+    def test_repair_stability_example_snapshot(self) -> None:
+        fields = parse_labeled_text((EXAMPLES_DIR / "oul_repair_stability_input.txt").read_text(encoding="utf-8"))
+        expected = (EXAMPLES_DIR / "oul_repair_stability_output.txt").read_text(encoding="utf-8").rstrip()
+        self.assertEqual(format_report(analyze_oul(**fields)), expected)
+
     def test_permission_boundary_example_snapshot(self) -> None:
         fields = parse_labeled_text((EXAMPLES_DIR / "oul_permission_boundary_input.txt").read_text(encoding="utf-8"))
         expected = (EXAMPLES_DIR / "oul_permission_boundary_output.txt").read_text(encoding="utf-8").rstrip()

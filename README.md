@@ -12,11 +12,15 @@ No API key, model call, backend, telemetry, or build step is required.
 
 ## Version
 
-Current repository version: **0.3.0** (2026-07-18).
+Current repository version: **0.4.0** (2026-07-31).
 
 The package version in `pyproject.toml` is the source of truth. This history names
 user-visible changes so readers do not have to infer versions by comparing commits.
 
+- **0.4.0** — Added explicit evidence/inference/assumption/unknown separation,
+  residual exploit-surface reporting, falsification conditions, and comparable
+  prior-state delta checks. Incomplete prior states remain non-comparable rather
+  than being repaired through inference.
 - **0.3.0** — Changed omitted authority fields from permissive `yes` defaults to
   explicit `unknown`, added the `authority=established` shorthand, preserved the
   supplied drift risk in reports, distinguished unverified from evidence-referenced
@@ -53,7 +57,14 @@ python -m oul.cli `
   --current-plan "Rank reviewers by throughput score and completion volume." `
   --pressure-source "Management wants higher dashboard scores." `
   --constraints "Preserve evidence verification." `
-  --observed-drift-risk "The workflow is only optimizing score and volume."
+  --observed-drift-risk "The workflow is only optimizing score and volume." `
+  --evidence "The plan explicitly uses throughput score." `
+  --inference "Score may displace review accuracy." `
+  --assumptions "The supplied plan is applied as written." `
+  --unknowns "Enforcement behavior was not supplied." `
+  --prior-objective "Improve claim review accuracy." `
+  --prior-plan "Verify each claim against its cited source." `
+  --prior-constraints "Preserve evidence verification."
 ```
 
 It also accepts a labeled text file:
@@ -64,6 +75,13 @@ Current Plan: Rank reviewers by throughput score and completion volume.
 Pressure Source: Management wants higher dashboard scores.
 Constraints: Preserve evidence verification.
 Observed Drift Risk: The workflow is only optimizing score and volume.
+Evidence: The plan explicitly uses throughput score.
+Inference: Score may displace review accuracy.
+Assumptions: The supplied plan is applied as written.
+Unknowns: Enforcement behavior was not supplied.
+Prior Objective: Improve claim review accuracy.
+Prior Plan: Verify each claim against its cited source.
+Prior Constraints: Preserve evidence verification.
 Action: Local repair | authority=established | completed=yes | evidence=local-repair.patch
 Action: Platform integration | capable=yes | identity=no | approved=no | permitted=unknown | policy=yes | platform=yes
 ```
@@ -79,6 +97,14 @@ reports a completion without evidence as an unverified declaration. An evidence
 reference is preserved but not independently validated. A blocked action is never included in the authorized scope,
 even when the rest of the plan remains valid.
 
+`Evidence`, `Inference`, `Assumptions`, and `Unknowns` are optional user-labeled
+states. OUL preserves them separately and labels its own classification as a
+deterministic heuristic inference; it does not independently verify supplied
+evidence. A comparable delta requires all three prior-state fields: `Prior
+Objective`, `Prior Plan`, and `Prior Constraints`. If none are supplied, OUL
+reports `No prior comparable state available.` If only part of the prior state is
+supplied, OUL refuses the comparison instead of filling the gaps.
+
 If a blocked action is supplied with `completed=yes`, OUL preserves that report
 as an unauthorized completion declaration. It does not erase possible execution,
 and it does not convert the execution into authorized completion.
@@ -90,20 +116,24 @@ OUL returns deterministic labeled sections:
 1. Objective
 2. Load / Pressure
 3. Observed Drift Risk
-4. Preservation Check
-5. Proxy Drift Risks
-6. Failure Surfaces
-7. Classification
-8. Objective Status
-9. Plan Status
-10. Capability Status
-11. Execution Authority
-12. Authorized Scope
-13. Unauthorized Boundary
-14. Stop Condition
-15. Completion Claim
-16. Repair Recommendation
-17. Commit Summary
+4. Evidence / Inference Boundary
+5. Preservation Check
+6. Proxy Drift Risks
+7. Failure Surfaces
+8. Classification
+9. Objective Status
+10. Plan Status
+11. Capability Status
+12. Execution Authority
+13. Authorized Scope
+14. Unauthorized Boundary
+15. Stop Condition
+16. Completion Claim
+17. Repair Recommendation
+18. Residual Exploit Surfaces
+19. Falsification Conditions
+20. Delta Check
+21. Commit Summary
 
 Classification options:
 
@@ -137,6 +167,8 @@ Example inputs and outputs live in `examples/`:
 - `examples/oul_constraint_drift_output.txt`
 - `examples/oul_permission_boundary_input.txt`
 - `examples/oul_permission_boundary_output.txt`
+- `examples/oul_repair_stability_input.txt`
+- `examples/oul_repair_stability_output.txt`
 
 ## Tests
 
@@ -157,6 +189,9 @@ plain text output so the result can be inspected, copied into a commit note, or
 used as a weekend-ready local audit artifact.
 
 Keep the tool small: add examples and tests before adding architecture.
+
+The 0.4.0 mechanisms are deterministic report fields, not a claim that OUL can
+validate evidence, discover every exploit, or infer semantic constraint changes.
 
 ## What OUL Does Not Do
 

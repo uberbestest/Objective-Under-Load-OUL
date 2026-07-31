@@ -1,0 +1,71 @@
+Objective:
+Preserve source-grounded claim review.
+
+Load / Pressure:
+Give scheduling preference when the score reaches the target.
+
+Observed Drift Risk:
+The score can improve while verification fails.
+
+Evidence / Inference Boundary:
+- User-designated evidence: The supplied plan explicitly permits skipped verification for high-volume reviewers. Input fields (objective, current plan/output, pressure source, constraints, observed drift risk) are treated as supplied statements, not independently verified.
+- User-designated inference: Reviewers can improve the score without satisfying source verification. OUL heuristic inference: PROXY_SUBSTITUTED, derived from deterministic keyword and term-overlap cues.
+- User-designated assumption: The stated ranking rule is applied as written.
+- User-designated unknown: Enforcement behavior outside the supplied plan is unknown.
+
+Preservation Check:
+The current plan appears to target a proxy more clearly than the stated objective.
+
+Proxy Drift Risks:
+- Score
+- Throughput
+- Volume
+
+Failure Surfaces:
+- Goodharting
+- Metric Capture
+- Constraint Erosion
+
+Classification:
+PROXY_SUBSTITUTED
+
+Objective Status:
+Recoverable.
+
+Plan Status:
+Structurally valid only after bounded repair.
+
+Capability Status:
+Not assessed; no action boundaries supplied.
+
+Execution Authority:
+Not assessed; plan validity does not imply execution authority.
+
+Authorized Scope:
+- No authorized action stated.
+
+Unauthorized Boundary:
+- No unauthorized boundary identified.
+
+Stop Condition:
+Resolve authority per action before execution.
+
+Completion Claim:
+Analysis completed; no action execution was assessed or claimed.
+
+Repair Recommendation:
+Bind the plan back to the original objective and demote Score, Throughput, Volume to monitoring evidence only. Preserve constraints: Verify each cited source.
+
+Residual Exploit Surfaces:
+- Proxy pressure remains exploitable if Score, Throughput, Volume can improve while the objective or active constraints fail.
+- The proposed repair remains unverified against these detected surfaces: Goodharting, Metric Capture, Constraint Erosion.
+
+Falsification Conditions:
+- The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails.
+- It also fails if Score, Throughput, Volume improve without corresponding objective preservation.
+
+Delta Check:
+Objective text unchanged. Objective visibility weakened. Constraint text unchanged. Proxy dependence added: Score, Throughput, Volume. Exploit surfaces added: Constraint Erosion, Goodharting, Metric Capture.
+
+Commit Summary:
+OUL: proxy_substituted risk on 'Preserve source-grounded claim review' via Score, Throughput; surfaces: Goodharting, Metric Capture.

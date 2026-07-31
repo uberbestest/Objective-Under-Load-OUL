@@ -7,6 +7,12 @@ Pressure to treat technically understood work as effectively done.
 Observed Drift Risk:
 Prepared or awaiting approval may be compressed into completed.
 
+Evidence / Inference Boundary:
+- Supplied statements: objective, current plan/output, pressure source, constraints, observed drift risk; none were independently verified.
+- OUL heuristic inference: PRESERVED, derived from deterministic keyword and term-overlap cues.
+- No user-designated assumption supplied.
+- No explicit unknown supplied; this does not establish that none exist.
+
 Preservation Check:
 The objective remains visible and no proxy substitution is apparent.
 
@@ -46,6 +52,15 @@ Completion declared with evidence reference: Local repair [evidence: local-repai
 
 Repair Recommendation:
 No objective repair required. Resolve unknown or blocked authority before execution: Authenticated platform integration [IDENTITY_BLOCK, APPROVAL_BLOCK, AUTHORITY_UNKNOWN(permitted)].
+
+Residual Exploit Surfaces:
+- No residual exploit surface identified from supplied text; absence was not independently proven.
+
+Falsification Conditions:
+- The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails.
+
+Delta Check:
+No prior comparable state available.
 
 Commit Summary:
 OUL: objective preserved for 'Complete the platform integration without overstating execution'.

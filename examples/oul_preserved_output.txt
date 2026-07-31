@@ -7,6 +7,12 @@ Normal iteration pressure from weekly prompt cleanup.
 Observed Drift Risk:
 No observed drift.
 
+Evidence / Inference Boundary:
+- Supplied statements: objective, current plan/output, pressure source, constraints, observed drift risk; none were independently verified.
+- OUL heuristic inference: PRESERVED, derived from deterministic keyword and term-overlap cues.
+- No user-designated assumption supplied.
+- No explicit unknown supplied; this does not establish that none exist.
+
 Preservation Check:
 The objective remains visible and no proxy substitution is apparent.
 
@@ -45,6 +51,15 @@ Analysis completed; no action execution was assessed or claimed.
 
 Repair Recommendation:
 No repair required. Keep monitoring proxies as signals, not targets.
+
+Residual Exploit Surfaces:
+- No residual exploit surface identified from supplied text; absence was not independently proven.
+
+Falsification Conditions:
+- The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails.
+
+Delta Check:
+No prior comparable state available.
 
 Commit Summary:
 OUL: objective preserved for 'Keep support answers source-grounded'.

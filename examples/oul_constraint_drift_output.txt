@@ -7,6 +7,12 @@ Optimize for speed.
 Observed Drift Risk:
 Verification may be bypassed to improve speed.
 
+Evidence / Inference Boundary:
+- Supplied statements: objective, current plan/output, pressure source, constraints, observed drift risk; none were independently verified.
+- OUL heuristic inference: DRIFTING, derived from deterministic keyword and term-overlap cues.
+- No user-designated assumption supplied.
+- No explicit unknown supplied; this does not establish that none exist.
+
 Preservation Check:
 The objective is still recoverable, but constraints or attention are shifting toward proxy targets.
 
@@ -47,6 +53,17 @@ Analysis completed; no action execution was assessed or claimed.
 
 Repair Recommendation:
 Add an explicit check that Handling Time, Speed cannot pass unless it also preserves the objective. Preserve constraints: Verify cited sources before final answer.
+
+Residual Exploit Surfaces:
+- Proxy pressure remains exploitable if Handling Time, Speed can improve while the objective or active constraints fail.
+- The proposed repair remains unverified against these detected surfaces: Constraint Erosion, Metric Capture.
+
+Falsification Conditions:
+- The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails.
+- It also fails if Handling Time, Speed improve without corresponding objective preservation.
+
+Delta Check:
+No prior comparable state available.
 
 Commit Summary:
 OUL: drifting risk on 'Keep assistant answers source-grounded' via Handling Time, Speed; surfaces: Constraint Erosion, Metric Capture.

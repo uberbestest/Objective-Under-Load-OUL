@@ -1,0 +1,12 @@
+Objective: Preserve source-grounded claim review.
+Current Plan: Rank reviewers by throughput score while permitting skipped verification for high-volume reviewers.
+Pressure Source: Give scheduling preference when the score reaches the target.
+Constraints: Verify each cited source.
+Observed Drift Risk: The score can improve while verification fails.
+Evidence: The supplied plan explicitly permits skipped verification for high-volume reviewers.
+Inference: Reviewers can improve the score without satisfying source verification.
+Assumptions: The stated ranking rule is applied as written.
+Unknowns: Enforcement behavior outside the supplied plan is unknown.
+Prior Objective: Preserve source-grounded claim review.
+Prior Plan: Preserve source-grounded claim review by checking each claim against its cited source before acceptance.
+Prior Constraints: Verify each cited source.

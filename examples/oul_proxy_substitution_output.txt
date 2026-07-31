@@ -7,6 +7,12 @@ Management wants higher dashboard scores.
 Observed Drift Risk:
 The workflow is only optimizing score and volume.
 
+Evidence / Inference Boundary:
+- Supplied statements: objective, current plan/output, pressure source, constraints, observed drift risk; none were independently verified.
+- OUL heuristic inference: PROXY_SUBSTITUTED, derived from deterministic keyword and term-overlap cues.
+- No user-designated assumption supplied.
+- No explicit unknown supplied; this does not establish that none exist.
+
 Preservation Check:
 The current plan appears to target a proxy more clearly than the stated objective.
 
@@ -48,6 +54,17 @@ Analysis completed; no action execution was assessed or claimed.
 
 Repair Recommendation:
 Bind the plan back to the original objective and demote Score, Throughput, Volume to monitoring evidence only. Preserve constraints: Preserve evidence verification.
+
+Residual Exploit Surfaces:
+- Proxy pressure remains exploitable if Score, Throughput, Volume can improve while the objective or active constraints fail.
+- The proposed repair remains unverified against these detected surfaces: Goodharting, Metric Capture.
+
+Falsification Conditions:
+- The repair or preservation judgment fails if the plan can pass while the stated objective or an active constraint fails.
+- It also fails if Score, Throughput, Volume improve without corresponding objective preservation.
+
+Delta Check:
+No prior comparable state available.
 
 Commit Summary:
 OUL: proxy_substituted risk on 'Improve claim review accuracy' via Score, Throughput; surfaces: Goodharting, Metric Capture.
