@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use Objective Under Load (OUL), please cite this repository."
+title: "Objective Under Load (OUL)"
+type: software
+authors:
+  - family-names: Young
+    given-names: Josh
+version: "0.4.0"
+abstract: "A deterministic audit CLI for testing whether an objective remains recoverable under optimization pressure while preserving evidence, inference, unknowns, authorization boundaries, provenance, and completion semantics."
+keywords:
+  - AI evaluation
+  - agent reliability
+  - agent safety
+  - objective drift
+  - authorization boundaries
+  - provenance
+  - specification gaming
+  - proxy substitution
+  - completion semantics
+repository-code: "https://github.com/uberbestest/Objective-Under-Load-OUL"
